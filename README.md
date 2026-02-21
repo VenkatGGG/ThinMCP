@@ -18,6 +18,7 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] On-demand refresh when `execute()` sees stale or missing tool metadata
 - [x] Basic sandbox hardening (frozen runtime globals + timeout + code-length limit)
 - [x] Targeted sync for one upstream with `--server <id>`
+- [x] `doctor` command to validate config + auth env wiring
 - [ ] Optional HTTP transport for ThinMCP server
 
 ## Architecture
@@ -68,6 +69,12 @@ Start ThinMCP MCP server (stdio):
 
 ```bash
 npm run dev
+```
+
+Validate local setup:
+
+```bash
+npm run doctor
 ```
 
 ## Example Usage in Model Tool Calls
