@@ -22,6 +22,7 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Optional HTTP transport for ThinMCP server (`--transport http`)
 - [x] `execute()` argument validation against cached tool input schemas
 - [x] Non-text/large tool outputs normalized before model return
+- [x] Worker-isolated sandbox runtime with memory limits and hard termination
 
 ## Architecture
 
@@ -120,4 +121,4 @@ async () => {
 
 - ThinMCP currently supports upstream MCP servers over Streamable HTTP.
 - Stdio upstream servers are intentionally out of scope for this initial version.
-- Sandboxing uses Node `vm` with limits. This is sufficient for local trusted usage, not hardened multi-tenant isolation.
+- Sandboxing runs in a dedicated worker with memory limits and wall-clock termination, still intended for local trusted usage rather than hostile multi-tenant workloads.
