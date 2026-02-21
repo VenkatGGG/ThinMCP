@@ -20,6 +20,8 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Targeted sync for one upstream with `--server <id>`
 - [x] `doctor` command to validate config + auth env wiring
 - [x] Optional HTTP transport for ThinMCP server (`--transport http`)
+- [x] `execute()` argument validation against cached tool input schemas
+- [x] Non-text/large tool outputs normalized before model return
 
 ## Architecture
 

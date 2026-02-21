@@ -2,6 +2,7 @@ import type { ExecuteToolInput } from "./types.js";
 import { CatalogStore } from "./catalog-store.js";
 import { UpstreamManager } from "./upstream-manager.js";
 import { logInfo } from "./logger.js";
+import { ToolInputValidator } from "./schema-validator.js";
 
 interface ToolProxyOptions {
   refreshServer?: (serverId: string) => Promise<void>;
@@ -11,6 +12,7 @@ export class ToolProxy {
   private readonly store: CatalogStore;
   private readonly upstream: UpstreamManager;
   private readonly refreshServer?: (serverId: string) => Promise<void>;
+  private readonly inputValidator: ToolInputValidator;
 
   public constructor(
     store: CatalogStore,
@@ -20,6 +22,7 @@ export class ToolProxy {
     this.store = store;
     this.upstream = upstream;
     this.refreshServer = options?.refreshServer;
+    this.inputValidator = new ToolInputValidator();
   }
 
   public async call(input: ExecuteToolInput): Promise<unknown> {
@@ -57,11 +60,41 @@ export class ToolProxy {
       }
     }
 
+    await this.validateInputWithRefresh(knownTool, input.arguments);
+
     return this.upstream.callTool({
       serverId: input.serverId,
       name: input.name,
       ...(input.arguments ? { arguments: input.arguments } : {}),
     });
+  }
+
+  private async validateInputWithRefresh(
+    knownTool: NonNullable<ReturnType<CatalogStore["getTool"]>>,
+    args: Record<string, unknown> | undefined,
+  ): Promise<void> {
+    try {
+      this.inputValidator.validate(knownTool, args);
+      return;
+    } catch (firstError: unknown) {
+      if (!this.refreshServer) {
+        throw firstError;
+      }
+
+      logInfo("proxy.refresh.start", {
+        serverId: knownTool.serverId,
+        reason: "input_validation_failed",
+        toolName: knownTool.toolName,
+      });
+
+      await this.refreshServer(knownTool.serverId);
+      const refreshedTool = this.store.getTool(knownTool.serverId, knownTool.toolName);
+      if (!refreshedTool) {
+        throw firstError;
+      }
+
+      this.inputValidator.validate(refreshedTool, args);
+    }
   }
 }
 

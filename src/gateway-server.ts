@@ -3,6 +3,7 @@ import * as z from "zod/v4";
 import { CatalogStore } from "./catalog-store.js";
 import { ToolProxy } from "./proxy.js";
 import { createCatalogApi, createExecuteApi } from "./runtime-apis.js";
+import { normalizeExecuteOutput } from "./execute-output.js";
 import { runSandboxedCode, serializeWithLimit } from "./sandbox.js";
 import type { RuntimeSettings } from "./types.js";
 
@@ -85,13 +86,17 @@ export function createGatewayServer(options: {
             tool: executeApi.tool,
           },
         });
+        const normalizedResult = normalizeExecuteOutput(result);
 
-        const text = serializeWithLimit(result, options.runtime.maxResultChars);
+        const text = serializeWithLimit(
+          normalizedResult,
+          options.runtime.maxResultChars,
+        );
 
         return {
           content: [{ type: "text", text }],
           structuredContent: {
-            result,
+            result: normalizedResult,
           },
         };
       } catch (error: unknown) {
