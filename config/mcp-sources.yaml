@@ -8,6 +8,17 @@ servers:
       type: none
     allowTools: ["*"]
 
+  - id: example-stdio
+    name: Example Disabled Stdio Server
+    transport: stdio
+    command: node
+    args:
+      - ./dist/mock-server.js
+    cwd: ..
+    enabled: false
+    stderr: inherit
+    allowTools: ["*"]
+
 sync:
   intervalSeconds: 300
   onStart: false

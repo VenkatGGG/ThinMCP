@@ -2,15 +2,35 @@ export type AuthConfig =
   | { type: "none" }
   | { type: "bearer_env"; env: string };
 
-export interface SourceServerConfig {
+export interface ServerProbeConfig {
+  toolName: string;
+  arguments?: Record<string, unknown>;
+}
+
+export interface SourceServerBaseConfig {
   id: string;
   name?: string;
+  enabled?: boolean;
+  allowTools?: string[];
+  probe?: ServerProbeConfig;
+}
+
+export interface HttpSourceServerConfig extends SourceServerBaseConfig {
   transport: "http";
   url: string;
-  enabled?: boolean;
   auth?: AuthConfig;
-  allowTools?: string[];
 }
+
+export interface StdioSourceServerConfig extends SourceServerBaseConfig {
+  transport: "stdio";
+  command: string;
+  args?: string[];
+  cwd?: string;
+  env?: Record<string, string>;
+  stderr?: "inherit" | "pipe";
+}
+
+export type SourceServerConfig = HttpSourceServerConfig | StdioSourceServerConfig;
 
 export interface ThinMcpConfig {
   servers: SourceServerConfig[];

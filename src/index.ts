@@ -14,6 +14,9 @@ async function main(): Promise<void> {
   const transportMode = (readArgValue("--transport") ?? "stdio").toLowerCase();
   const port = readPortArg("--port", 8787);
   const host = readArgValue("--host") ?? "127.0.0.1";
+  const httpAuthToken = resolveHttpAuthToken();
+  const httpRateLimit = readIntArg("--http-rate-limit", 120);
+  const httpRateWindowSeconds = readIntArg("--http-rate-window-seconds", 60);
 
   const config = loadConfig();
 
@@ -75,13 +78,24 @@ async function main(): Promise<void> {
       dbPath: config.catalog.dbPath,
     });
   } else if (transportMode === "http") {
-    const httpTransport = await startHttpTransport(mcpServer, { host, port });
+    const httpTransport = await startHttpTransport(mcpServer, {
+      host,
+      port,
+      ...(httpAuthToken ? { authToken: httpAuthToken } : {}),
+      rateLimit: {
+        maxRequests: httpRateLimit,
+        windowSeconds: httpRateWindowSeconds,
+      },
+    });
     extraShutdown = httpTransport.close;
 
     logInfo("gateway.ready", {
       mode: "http",
       endpoint: httpTransport.endpointUrl,
       healthz: `http://${host}:${port}/healthz`,
+      authEnabled: Boolean(httpAuthToken),
+      rateLimit: httpRateLimit,
+      rateWindowSeconds: httpRateWindowSeconds,
       configPath: config.configPath,
       dbPath: config.catalog.dbPath,
     });
@@ -155,4 +169,39 @@ function readPortArg(flag: string, fallback: number): number {
   }
 
   return parsed;
+}
+
+function readIntArg(flag: string, fallback: number): number {
+  const value = readArgValue(flag);
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid numeric value '${value}' for '${flag}'`);
+  }
+
+  return parsed;
+}
+
+function resolveHttpAuthToken(): string | undefined {
+  const tokenFromFlag = readArgValue("--http-auth-token");
+  if (tokenFromFlag) {
+    return tokenFromFlag;
+  }
+
+  const tokenEnvName = readArgValue("--http-auth-token-env");
+  if (tokenEnvName) {
+    const token = process.env[tokenEnvName];
+    if (!token) {
+      throw new Error(
+        `Missing env token from --http-auth-token-env '${tokenEnvName}'`,
+      );
+    }
+
+    return token;
+  }
+
+  return process.env.THINMCP_HTTP_TOKEN;
 }

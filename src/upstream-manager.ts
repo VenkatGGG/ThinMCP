@@ -1,11 +1,17 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { SourceServerConfig } from "./types.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type {
+  HttpSourceServerConfig,
+  SourceServerConfig,
+  StdioSourceServerConfig,
+} from "./types.js";
 
 interface ConnectedServer {
   config: SourceServerConfig;
   client: Client;
-  transport: StreamableHTTPClientTransport;
+  transport: Transport;
 }
 
 export class UpstreamManager {
@@ -77,9 +83,7 @@ export class UpstreamManager {
       throw new Error(`Server is disabled: ${serverId}`);
     }
 
-    const transport = new StreamableHTTPClientTransport(new URL(config.url), {
-      requestInit: buildRequestInit(config),
-    });
+    const transport = buildTransport(config);
     const client = new Client(
       {
         name: "thinmcp-upstream-client",
@@ -108,7 +112,17 @@ export class UpstreamManager {
   }
 }
 
-function buildRequestInit(config: SourceServerConfig): RequestInit {
+function buildTransport(config: SourceServerConfig): Transport {
+  if (config.transport === "http") {
+    return new StreamableHTTPClientTransport(new URL(config.url), {
+      requestInit: buildRequestInit(config),
+    });
+  }
+
+  return new StdioClientTransport(buildStdioServerParams(config));
+}
+
+function buildRequestInit(config: HttpSourceServerConfig): RequestInit {
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };
@@ -126,5 +140,21 @@ function buildRequestInit(config: SourceServerConfig): RequestInit {
 
   return {
     headers,
+  };
+}
+
+function buildStdioServerParams(config: StdioSourceServerConfig): {
+  command: string;
+  args?: string[];
+  cwd?: string;
+  env?: Record<string, string>;
+  stderr?: "inherit" | "pipe";
+} {
+  return {
+    command: config.command,
+    ...(config.args && config.args.length > 0 ? { args: config.args } : {}),
+    ...(config.cwd ? { cwd: config.cwd } : {}),
+    ...(config.env ? { env: config.env } : {}),
+    ...(config.stderr ? { stderr: config.stderr } : {}),
   };
 }

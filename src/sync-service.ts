@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type { CatalogSettings, NormalizedToolRecord, SourceServerConfig } from "./types.js";
 import { CatalogStore } from "./catalog-store.js";
 import { logError, logInfo } from "./logger.js";
+import { getServerEndpoint } from "./server-utils.js";
 import { UpstreamManager } from "./upstream-manager.js";
 
 export interface SyncRunSummary {
@@ -46,7 +47,10 @@ export class SyncService {
   }
 
   public async syncServer(server: SourceServerConfig): Promise<SyncRunSummary> {
-    logInfo("sync.start", { serverId: server.id, url: server.url });
+    logInfo("sync.start", {
+      serverId: server.id,
+      endpoint: getServerEndpoint(server),
+    });
 
     const tools = await this.upstream.listTools(server.id);
     const snapshotPayload = {
@@ -120,7 +124,7 @@ function normalizeTools(
     return {
       serverId: server.id,
       serverName: server.name ?? server.id,
-      serverUrl: server.url,
+      serverUrl: getServerEndpoint(server),
       toolName: tool.name,
       title,
       description,

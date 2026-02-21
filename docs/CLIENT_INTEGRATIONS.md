@@ -18,6 +18,17 @@ cd /Users/sri/Desktop/silly_experiments/ThinMCP
 npm run dev:http
 ```
 
+HTTP mode with auth/rate limits:
+
+```bash
+THINMCP_HTTP_TOKEN=supersecret \
+npm run dev -- \
+  --transport http \
+  --http-auth-token-env THINMCP_HTTP_TOKEN \
+  --http-rate-limit 120 \
+  --http-rate-window-seconds 60
+```
+
 ## 2) Claude Desktop (stdio)
 
 Add to your Claude Desktop MCP config:
@@ -65,6 +76,12 @@ Health endpoint:
 
 ```text
 http://127.0.0.1:8787/healthz
+```
+
+When HTTP auth is enabled, clients must send:
+
+```text
+Authorization: Bearer <token>
 ```
 
 ## 4) Recommended Tool Prompting Pattern

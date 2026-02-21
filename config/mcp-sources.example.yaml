@@ -7,6 +7,10 @@ servers:
       type: bearer_env
       env: CLOUDFLARE_TOKEN
     allowTools: ["*"]
+    probe:
+      toolName: zones.list
+      arguments:
+        account_id: YOUR_ACCOUNT_ID
 
   - id: internal-crm
     name: Internal CRM MCP
@@ -18,6 +22,21 @@ servers:
     allowTools:
       - "records.*"
       - "contacts.list"
+    probe:
+      toolName: contacts.list
+
+  - id: local-fs
+    name: Local Filesystem MCP (stdio)
+    transport: stdio
+    command: npx
+    args:
+      - -y
+      - "@modelcontextprotocol/server-filesystem"
+      - /tmp
+    cwd: /Users/sri/Desktop/silly_experiments/ThinMCP
+    stderr: inherit
+    allowTools:
+      - "filesystem.*"
 
 sync:
   intervalSeconds: 300

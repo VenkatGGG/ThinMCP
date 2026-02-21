@@ -1,5 +1,6 @@
 import { loadConfig } from "./config.js";
 import { logInfo } from "./logger.js";
+import { getServerEndpoint } from "./server-utils.js";
 
 function main(): void {
   const config = loadConfig();
@@ -15,16 +16,30 @@ function main(): void {
     const enabled = server.enabled !== false;
     const allowTools = server.allowTools ?? ["*"];
 
-    if (server.auth?.type === "bearer_env") {
+    if (server.transport === "http" && server.auth?.type === "bearer_env") {
       const hasToken = Boolean(process.env[server.auth.env]);
       logInfo("doctor.server", {
         id: server.id,
         enabled,
         transport: server.transport,
-        url: server.url,
+        endpoint: getServerEndpoint(server),
         authType: server.auth.type,
         authEnv: server.auth.env,
         authEnvPresent: hasToken,
+        allowTools,
+      });
+      continue;
+    }
+
+    if (server.transport === "stdio") {
+      logInfo("doctor.server", {
+        id: server.id,
+        enabled,
+        transport: server.transport,
+        endpoint: getServerEndpoint(server),
+        command: server.command,
+        cwd: server.cwd ?? process.cwd(),
+        stderr: server.stderr ?? "inherit",
         allowTools,
       });
       continue;
@@ -34,7 +49,7 @@ function main(): void {
       id: server.id,
       enabled,
       transport: server.transport,
-      url: server.url,
+      endpoint: getServerEndpoint(server),
       authType: server.auth?.type ?? "none",
       allowTools,
     });

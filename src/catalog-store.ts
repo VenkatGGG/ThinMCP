@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { NormalizedToolRecord, SearchQuery, SourceServerConfig } from "./types.js";
+import { getServerEndpoint } from "./server-utils.js";
 
 export interface ServerRecord {
   id: string;
@@ -56,7 +57,7 @@ export class CatalogStore {
         statement.run({
           id: server.id,
           name: server.name ?? server.id,
-          url: server.url,
+          url: getServerEndpoint(server),
           enabled: server.enabled === false ? 0 : 1,
           allowTools: JSON.stringify(server.allowTools ?? ["*"]),
         });

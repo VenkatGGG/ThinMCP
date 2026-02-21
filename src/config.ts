@@ -2,22 +2,49 @@ import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
 import { z } from "zod";
-import type { ResolvedConfig, ThinMcpConfig } from "./types.js";
+import type {
+  ResolvedConfig,
+  SourceServerConfig,
+  ThinMcpConfig,
+} from "./types.js";
 
 const authSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("none") }),
   z.object({ type: z.literal("bearer_env"), env: z.string().min(1) }),
 ]);
 
-const serverSchema = z.object({
+const probeSchema = z.object({
+  toolName: z.string().min(1),
+  arguments: z.record(z.string(), z.unknown()).optional(),
+});
+
+const serverBaseSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).optional(),
+  enabled: z.boolean().optional().default(true),
+  allowTools: z.array(z.string().min(1)).optional().default(["*"]),
+  probe: probeSchema.optional(),
+});
+
+const httpServerSchema = serverBaseSchema.extend({
   transport: z.literal("http").default("http"),
   url: z.string().url(),
-  enabled: z.boolean().optional().default(true),
   auth: authSchema.optional().default({ type: "none" }),
-  allowTools: z.array(z.string().min(1)).optional().default(["*"]),
 });
+
+const stdioServerSchema = serverBaseSchema.extend({
+  transport: z.literal("stdio"),
+  command: z.string().min(1),
+  args: z.array(z.string()).optional().default([]),
+  cwd: z.string().min(1).optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  stderr: z.enum(["inherit", "pipe"]).optional().default("inherit"),
+});
+
+const serverSchema = z.discriminatedUnion("transport", [
+  httpServerSchema,
+  stdioServerSchema,
+]);
 
 const configSchema = z.object({
   servers: z.array(serverSchema).min(1),
@@ -50,6 +77,22 @@ function resolvePath(fromFile: string, target: string): string {
   return path.resolve(path.dirname(fromFile), target);
 }
 
+function resolveServerPaths(
+  selectedPath: string,
+  servers: SourceServerConfig[],
+): SourceServerConfig[] {
+  return servers.map((server) => {
+    if (server.transport !== "stdio" || !server.cwd) {
+      return server;
+    }
+
+    return {
+      ...server,
+      cwd: resolvePath(selectedPath, server.cwd),
+    };
+  });
+}
+
 export function loadConfig(configPath?: string): ResolvedConfig {
   const selectedPath =
     configPath ??
@@ -71,7 +114,7 @@ export function loadConfig(configPath?: string): ResolvedConfig {
 
   return {
     configPath: selectedPath,
-    servers: parsed.servers,
+    servers: resolveServerPaths(selectedPath, parsed.servers),
     sync: {
       intervalSeconds: parsed.sync?.intervalSeconds ?? 300,
       onStart: parsed.sync?.onStart ?? true,

@@ -25,6 +25,9 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Worker-isolated sandbox runtime with memory limits and hard termination
 - [x] Automated test suite (`npm test`) for sandbox/proxy/validation/output shaping
 - [x] Client integration guide (`docs/CLIENT_INTEGRATIONS.md`)
+- [x] Upstream MCP support over `stdio` in addition to Streamable HTTP
+- [x] HTTP gateway auth + rate limits (`--http-auth-token*`, `--http-rate-*`)
+- [x] Real-upstream e2e test entrypoint (`npm run test:e2e`)
 
 ## Architecture
 
@@ -57,6 +60,7 @@ npm install
 npm run typecheck
 npm run build
 npm test
+npm run test:e2e   # runs only if THINMCP_RUN_E2E=1
 ```
 
 Sync only:
@@ -88,6 +92,18 @@ Custom host/port:
 ```bash
 npm run dev -- --transport http --host 0.0.0.0 --port 8787
 ```
+
+HTTP auth + rate limit options:
+
+```bash
+npm run dev -- \
+  --transport http \
+  --http-auth-token-env THINMCP_HTTP_TOKEN \
+  --http-rate-limit 120 \
+  --http-rate-window-seconds 60
+```
+
+Or set `THINMCP_HTTP_TOKEN` directly in environment.
 
 Validate local setup:
 
@@ -123,6 +139,7 @@ async () => {
 ## Notes
 
 - ThinMCP currently supports upstream MCP servers over Streamable HTTP.
-- Stdio upstream servers are intentionally out of scope for this initial version.
+- ThinMCP supports upstream MCP servers over both Streamable HTTP and stdio transports.
 - Sandboxing runs in a dedicated worker with memory limits and wall-clock termination, still intended for local trusted usage rather than hostile multi-tenant workloads.
 - Client setup examples are in `/Users/sri/Desktop/silly_experiments/ThinMCP/docs/CLIENT_INTEGRATIONS.md`.
+- Real-upstream e2e tests are opt-in: set `THINMCP_RUN_E2E=1` and configure enabled servers (plus tokens) in config.
