@@ -1,0 +1,33 @@
+servers:
+  - id: cloudflare
+    name: Cloudflare API MCP
+    transport: http
+    url: https://mcp.cloudflare.com/mcp
+    auth:
+      type: bearer_env
+      env: CLOUDFLARE_TOKEN
+    allowTools: ["*"]
+
+  - id: internal-crm
+    name: Internal CRM MCP
+    transport: http
+    url: https://mcp.internal.example.com/mcp
+    auth:
+      type: bearer_env
+      env: CRM_MCP_TOKEN
+    allowTools:
+      - "records.*"
+      - "contacts.list"
+
+sync:
+  intervalSeconds: 300
+  onStart: true
+
+runtime:
+  codeTimeoutMs: 15000
+  maxCodeLength: 20000
+  maxResultChars: 60000
+
+catalog:
+  dbPath: ../data/thinmcp.db
+  snapshotDir: ../snapshots

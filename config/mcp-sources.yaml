@@ -1,0 +1,22 @@
+servers:
+  - id: example-server
+    name: Example Disabled Server
+    transport: http
+    url: https://example.com/mcp
+    enabled: false
+    auth:
+      type: none
+    allowTools: ["*"]
+
+sync:
+  intervalSeconds: 300
+  onStart: false
+
+runtime:
+  codeTimeoutMs: 15000
+  maxCodeLength: 20000
+  maxResultChars: 60000
+
+catalog:
+  dbPath: ../data/thinmcp.db
+  snapshotDir: ../snapshots
