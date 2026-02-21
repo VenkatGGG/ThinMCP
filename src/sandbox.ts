@@ -23,7 +23,7 @@ export async function runSandboxedCode<T>(
   }
 
   const context = vm.createContext(
-    Object.freeze({
+    deepFreeze({
       ...options.globals,
       console: undefined,
       process: undefined,
@@ -73,6 +73,25 @@ export function serializeWithLimit(
 
   const suffix = `\n... [truncated to ${maxChars} chars]`;
   return serialized.slice(0, Math.max(0, maxChars - suffix.length)) + suffix;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  if (Object.isFrozen(value)) {
+    return value;
+  }
+
+  Object.freeze(value);
+
+  for (const key of Object.getOwnPropertyNames(value)) {
+    const nested = (value as Record<string, unknown>)[key];
+    deepFreeze(nested);
+  }
+
+  return value;
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

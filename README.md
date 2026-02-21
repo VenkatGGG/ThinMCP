@@ -15,8 +15,8 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Local catalog store (SQLite) and snapshot persistence
 - [x] Upstream MCP sync pipeline (`tools/list` -> normalized catalog)
 - [x] `search()` and `execute()` tool registration in gateway MCP server
-- [ ] Better sandbox hardening (current runtime is basic)
-- [ ] On-demand refresh on schema drift
+- [x] On-demand refresh when `execute()` sees stale or missing tool metadata
+- [x] Basic sandbox hardening (frozen runtime globals + timeout + code-length limit)
 - [ ] Optional HTTP transport for ThinMCP server
 
 ## Architecture

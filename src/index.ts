@@ -31,7 +31,16 @@ async function main(): Promise<void> {
   }
 
   const interval = syncService.startIntervalSync(config.sync.intervalSeconds);
-  const proxy = new ToolProxy(store, upstream);
+  const proxy = new ToolProxy(store, upstream, {
+    refreshServer: async (serverId) => {
+      const server = upstream.getServerConfig(serverId);
+      if (!server) {
+        return;
+      }
+
+      await syncService.syncServer(server);
+    },
+  });
   const mcpServer = createGatewayServer({
     store,
     proxy,
