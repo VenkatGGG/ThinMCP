@@ -23,6 +23,8 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] `execute()` argument validation against cached tool input schemas
 - [x] Non-text/large tool outputs normalized before model return
 - [x] Worker-isolated sandbox runtime with memory limits and hard termination
+- [x] Automated test suite (`npm test`) for sandbox/proxy/validation/output shaping
+- [x] Client integration guide (`docs/CLIENT_INTEGRATIONS.md`)
 
 ## Architecture
 
@@ -54,6 +56,7 @@ cd /Users/sri/Desktop/silly_experiments/ThinMCP
 npm install
 npm run typecheck
 npm run build
+npm test
 ```
 
 Sync only:
@@ -122,3 +125,4 @@ async () => {
 - ThinMCP currently supports upstream MCP servers over Streamable HTTP.
 - Stdio upstream servers are intentionally out of scope for this initial version.
 - Sandboxing runs in a dedicated worker with memory limits and wall-clock termination, still intended for local trusted usage rather than hostile multi-tenant workloads.
+- Client setup examples are in `/Users/sri/Desktop/silly_experiments/ThinMCP/docs/CLIENT_INTEGRATIONS.md`.
