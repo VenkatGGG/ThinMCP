@@ -8,6 +8,9 @@ import { SyncService } from "./sync-service.js";
 import { UpstreamManager } from "./upstream-manager.js";
 
 async function main(): Promise<void> {
+  const syncOnly = process.argv.includes("--sync-only");
+  const serverFilter = readArgValue("--server");
+
   const config = loadConfig();
 
   const store = new CatalogStore(config.catalog.dbPath);
@@ -16,16 +19,26 @@ async function main(): Promise<void> {
   const upstream = new UpstreamManager(config.servers);
   const syncService = new SyncService(store, upstream, config.catalog);
 
-  if (config.sync.onStart) {
-    await syncService.syncAllServers();
+  if (config.sync.onStart || syncOnly) {
+    if (serverFilter) {
+      const server = upstream.getServerConfig(serverFilter);
+      if (!server) {
+        throw new Error(`Unknown --server value '${serverFilter}' in current config.`);
+      }
+
+      await syncService.syncServer(server);
+    } else {
+      await syncService.syncAllServers();
+    }
   }
 
-  if (process.argv.includes("--sync-only")) {
+  if (syncOnly) {
     await upstream.closeAll();
     store.close();
     logInfo("sync.only.complete", {
       configPath: config.configPath,
       dbPath: config.catalog.dbPath,
+      ...(serverFilter ? { serverId: serverFilter } : {}),
     });
     return;
   }
@@ -90,3 +103,17 @@ main().catch((error: unknown) => {
   });
   process.exit(1);
 });
+
+function readArgValue(flag: string): string | null {
+  const index = process.argv.findIndex((arg) => arg === flag);
+  if (index < 0) {
+    return null;
+  }
+
+  const nextValue = process.argv[index + 1];
+  if (!nextValue || nextValue.startsWith("-")) {
+    throw new Error(`Missing value after '${flag}'`);
+  }
+
+  return nextValue;
+}

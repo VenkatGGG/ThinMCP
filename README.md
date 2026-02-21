@@ -17,6 +17,7 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] `search()` and `execute()` tool registration in gateway MCP server
 - [x] On-demand refresh when `execute()` sees stale or missing tool metadata
 - [x] Basic sandbox hardening (frozen runtime globals + timeout + code-length limit)
+- [x] Targeted sync for one upstream with `--server <id>`
 - [ ] Optional HTTP transport for ThinMCP server
 
 ## Architecture
@@ -55,6 +56,12 @@ Sync only:
 
 ```bash
 npm run sync
+```
+
+Sync only for a single server:
+
+```bash
+npm run sync -- --server cloudflare
 ```
 
 Start ThinMCP MCP server (stdio):
