@@ -24,9 +24,24 @@ HTTP mode with auth/rate limits:
 THINMCP_HTTP_TOKEN=supersecret \
 npm run dev -- \
   --transport http \
+  --http-auth-mode bearer \
   --http-auth-token-env THINMCP_HTTP_TOKEN \
+  --redis-url redis://127.0.0.1:6379 \
   --http-rate-limit 120 \
   --http-rate-window-seconds 60
+```
+
+HTTP mode with JWT auth:
+
+```bash
+npm run dev -- \
+  --transport http \
+  --http-auth-mode jwt \
+  --http-jwt-jwks-url https://issuer.example.com/.well-known/jwks.json \
+  --http-jwt-issuer https://issuer.example.com \
+  --http-jwt-audience thinmcp-clients \
+  --redis-url redis://127.0.0.1:6379 \
+  --http-rate-limit 120
 ```
 
 ## 2) Claude Desktop (stdio)
@@ -76,6 +91,12 @@ Health endpoint:
 
 ```text
 http://127.0.0.1:8787/healthz
+```
+
+Metrics endpoint:
+
+```text
+http://127.0.0.1:8787/metrics
 ```
 
 When HTTP auth is enabled, clients must send:

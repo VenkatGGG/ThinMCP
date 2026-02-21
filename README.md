@@ -28,6 +28,9 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Upstream MCP support over `stdio` in addition to Streamable HTTP
 - [x] HTTP gateway auth + rate limits (`--http-auth-token*`, `--http-rate-*`)
 - [x] Real-upstream e2e test entrypoint (`npm run test:e2e`)
+- [x] Redis-backed shared HTTP rate limiter (`--redis-url`)
+- [x] JWT/JWKS inbound auth mode (`--http-auth-mode jwt`)
+- [x] Stdio upstream auto-restart/backoff + health snapshots (`/healthz`, `/metrics`)
 
 ## Architecture
 
@@ -98,12 +101,25 @@ HTTP auth + rate limit options:
 ```bash
 npm run dev -- \
   --transport http \
+  --http-auth-mode bearer \
   --http-auth-token-env THINMCP_HTTP_TOKEN \
+  --redis-url redis://127.0.0.1:6379 \
   --http-rate-limit 120 \
   --http-rate-window-seconds 60
 ```
 
 Or set `THINMCP_HTTP_TOKEN` directly in environment.
+
+JWT auth mode:
+
+```bash
+npm run dev -- \
+  --transport http \
+  --http-auth-mode jwt \
+  --http-jwt-jwks-url https://issuer.example.com/.well-known/jwks.json \
+  --http-jwt-issuer https://issuer.example.com \
+  --http-jwt-audience thinmcp-clients
+```
 
 Validate local setup:
 
@@ -138,8 +154,8 @@ async () => {
 
 ## Notes
 
-- ThinMCP currently supports upstream MCP servers over Streamable HTTP.
 - ThinMCP supports upstream MCP servers over both Streamable HTTP and stdio transports.
 - Sandboxing runs in a dedicated worker with memory limits and wall-clock termination, still intended for local trusted usage rather than hostile multi-tenant workloads.
 - Client setup examples are in `/Users/sri/Desktop/silly_experiments/ThinMCP/docs/CLIENT_INTEGRATIONS.md`.
 - Real-upstream e2e tests are opt-in: set `THINMCP_RUN_E2E=1` and configure enabled servers (plus tokens) in config.
+- HTTP health and metrics are available at `/healthz` and `/metrics` in HTTP mode and include upstream stdio health snapshots.
