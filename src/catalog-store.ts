@@ -164,6 +164,7 @@ export class CatalogStore {
 
   public searchTools(query: SearchQuery): ToolRecord[] {
     const safeLimit = clampLimit(query.limit);
+    const serverId = query.serverId ?? null;
 
     if (!query.query || query.query.trim().length === 0) {
       const statement = this.db.prepare(`
@@ -179,15 +180,15 @@ export class CatalogStore {
           annotations_json,
           snapshot_hash
         FROM tools
-        WHERE (?1 IS NULL OR server_id = ?1)
+        WHERE (@serverId IS NULL OR server_id = @serverId)
         ORDER BY server_id ASC, tool_name ASC
-        LIMIT ?2
+        LIMIT @limit
       `);
 
-      const rows = statement.all(query.serverId ?? null, safeLimit) as Record<
-        string,
-        unknown
-      >[];
+      const rows = statement.all({
+        serverId,
+        limit: safeLimit,
+      }) as Record<string, unknown>[];
       return rows.map((row) => mapToolRecord(row));
     }
 
@@ -202,20 +203,20 @@ export class CatalogStore {
         description,
         input_schema_json,
         output_schema_json,
-        annotations_json,
-        snapshot_hash
+          annotations_json,
+          snapshot_hash
       FROM tools
-      WHERE (?1 IS NULL OR server_id = ?1)
-        AND searchable_text LIKE ?2
+      WHERE (@serverId IS NULL OR server_id = @serverId)
+        AND searchable_text LIKE @query
       ORDER BY server_id ASC, tool_name ASC
-      LIMIT ?3
+      LIMIT @limit
     `);
 
-    const rows = statement.all(
-      query.serverId ?? null,
-      normalizedQuery,
-      safeLimit,
-    ) as Record<string, unknown>[];
+    const rows = statement.all({
+      serverId,
+      query: normalizedQuery,
+      limit: safeLimit,
+    }) as Record<string, unknown>[];
     return rows.map((row) => mapToolRecord(row));
   }
 
