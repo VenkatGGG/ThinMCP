@@ -47,6 +47,14 @@ Sync scheduler
   -> normalized catalog in SQLite
 ```
 
+## Token Reduction (Measured)
+
+Using Exa as a real upstream MCP server, we measured tool-schema context cost with `tiktoken` (`o200k_base`) on minified `tools/list` JSON:
+
+- Direct Exa MCP (`web_search_exa`, `company_research_exa`, `get_code_context_exa`): `686` tokens
+- ThinMCP gateway tools (`search`, `execute`): `188` tokens
+- Reduction: `72.59%` fewer tokens (`3.65x` smaller tool surface in context)
+
 ## Configure Upstream MCP Sources
 
 Edit `/Users/sri/Desktop/silly_experiments/ThinMCP/config/mcp-sources.yaml`.
@@ -159,3 +167,4 @@ async () => {
 - Client setup examples are in `/Users/sri/Desktop/silly_experiments/ThinMCP/docs/CLIENT_INTEGRATIONS.md`.
 - Real-upstream e2e tests are opt-in: set `THINMCP_RUN_E2E=1` and configure enabled servers (plus tokens) in config.
 - HTTP health and metrics are available at `/healthz` and `/metrics` in HTTP mode and include upstream stdio health snapshots.
+- Parallel Web Systems MCP endpoints (`search-mcp.parallel.ai`, `task-mcp.parallel.ai`) require API auth (`x-api-key` or `Authorization` bearer token).
