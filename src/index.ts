@@ -2,6 +2,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CatalogStore } from "./catalog-store.js";
 import { loadConfig } from "./config.js";
 import { createGatewayServer } from "./gateway-server.js";
+import { startHttpTransport } from "./http-transport.js";
 import { logError, logInfo } from "./logger.js";
 import { ToolProxy } from "./proxy.js";
 import { SyncService } from "./sync-service.js";
@@ -10,6 +11,9 @@ import { UpstreamManager } from "./upstream-manager.js";
 async function main(): Promise<void> {
   const syncOnly = process.argv.includes("--sync-only");
   const serverFilter = readArgValue("--server");
+  const transportMode = (readArgValue("--transport") ?? "stdio").toLowerCase();
+  const port = readPortArg("--port", 8787);
+  const host = readArgValue("--host") ?? "127.0.0.1";
 
   const config = loadConfig();
 
@@ -60,17 +64,38 @@ async function main(): Promise<void> {
     runtime: config.runtime,
   });
 
-  const transport = new StdioServerTransport();
-  await mcpServer.connect(transport);
+  let extraShutdown: (() => Promise<void>) | undefined;
+  if (transportMode === "stdio") {
+    const transport = new StdioServerTransport();
+    await mcpServer.connect(transport);
 
-  logInfo("gateway.ready", {
-    mode: "stdio",
-    configPath: config.configPath,
-    dbPath: config.catalog.dbPath,
-  });
+    logInfo("gateway.ready", {
+      mode: "stdio",
+      configPath: config.configPath,
+      dbPath: config.catalog.dbPath,
+    });
+  } else if (transportMode === "http") {
+    const httpTransport = await startHttpTransport(mcpServer, { host, port });
+    extraShutdown = httpTransport.close;
+
+    logInfo("gateway.ready", {
+      mode: "http",
+      endpoint: httpTransport.endpointUrl,
+      healthz: `http://${host}:${port}/healthz`,
+      configPath: config.configPath,
+      dbPath: config.catalog.dbPath,
+    });
+  } else {
+    throw new Error(
+      `Invalid --transport value '${transportMode}'. Use 'stdio' or 'http'.`,
+    );
+  }
 
   const shutdown = async (): Promise<void> => {
     clearInterval(interval);
+    if (extraShutdown) {
+      await extraShutdown().catch(() => undefined);
+    }
     await mcpServer.close().catch(() => undefined);
     await upstream.closeAll();
     store.close();
@@ -116,4 +141,18 @@ function readArgValue(flag: string): string | null {
   }
 
   return nextValue;
+}
+
+function readPortArg(flag: string, fallback: number): number {
+  const value = readArgValue(flag);
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 65535) {
+    throw new Error(`Invalid port value '${value}' for '${flag}'`);
+  }
+
+  return parsed;
 }

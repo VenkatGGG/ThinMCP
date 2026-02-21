@@ -19,7 +19,7 @@ You give your model only ThinMCP. ThinMCP keeps the full upstream tool surface o
 - [x] Basic sandbox hardening (frozen runtime globals + timeout + code-length limit)
 - [x] Targeted sync for one upstream with `--server <id>`
 - [x] `doctor` command to validate config + auth env wiring
-- [ ] Optional HTTP transport for ThinMCP server
+- [x] Optional HTTP transport for ThinMCP server (`--transport http`)
 
 ## Architecture
 
@@ -69,6 +69,18 @@ Start ThinMCP MCP server (stdio):
 
 ```bash
 npm run dev
+```
+
+Start ThinMCP MCP server over HTTP (Streamable HTTP):
+
+```bash
+npm run dev:http
+```
+
+Custom host/port:
+
+```bash
+npm run dev -- --transport http --host 0.0.0.0 --port 8787
 ```
 
 Validate local setup:
