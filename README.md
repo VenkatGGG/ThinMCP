@@ -99,7 +99,7 @@ Stacked servers: Filesystem + Memory + Everything + Figma + Puppeteer
 ### 1. Install and build
 
 ```bash
-cd /Users/sri/Desktop/silly_experiments/ThinMCP
+cd ThinMCP
 npm install
 npm run typecheck
 npm run build
@@ -109,11 +109,11 @@ npm run build
 
 Edit:
 
-- `/Users/sri/Desktop/silly_experiments/ThinMCP/config/mcp-sources.yaml`
+- `ThinMCP/config/mcp-sources.yaml`
 
 Reference template:
 
-- `/Users/sri/Desktop/silly_experiments/ThinMCP/config/mcp-sources.example.yaml`
+- `ThinMCP/config/mcp-sources.example.yaml`
 
 Minimal example (public Exa MCP):
 
@@ -256,7 +256,7 @@ npm run dev -- \
 
 Client integration examples:
 
-- `/Users/sri/Desktop/silly_experiments/ThinMCP/docs/CLIENT_INTEGRATIONS.md`
+- `ThinMCP/docs/CLIENT_INTEGRATIONS.md`
 
 Recommended model interaction pattern:
 
@@ -309,7 +309,7 @@ Notes:
 
 ## Troubleshooting
 
-- `Config file not found`: set `THINMCP_CONFIG` or place config at `/Users/sri/Desktop/silly_experiments/ThinMCP/config/mcp-sources.yaml`.
+- `Config file not found`: set `THINMCP_CONFIG` or place config at `ThinMCP/config/mcp-sources.yaml`.
 - `Missing env token for <server>`: export the environment variable referenced by `auth.env`.
 - `Unauthorized` from upstream: verify API key/OAuth token and scopes.
 - Stdio server startup failures: verify command, args, and working directory in server config.
