@@ -49,11 +49,35 @@ Sync scheduler
 
 ## Token Reduction (Measured)
 
-Using Exa as a real upstream MCP server, we measured tool-schema context cost with `tiktoken` (`o200k_base`) on minified `tools/list` JSON:
+ThinMCP keeps a constant tool surface (`search`, `execute`) in model context, even as you add more upstream MCP servers.
 
-- Direct Exa MCP (`web_search_exa`, `company_research_exa`, `get_code_context_exa`): `686` tokens
-- ThinMCP gateway tools (`search`, `execute`): `188` tokens
-- Reduction: `72.59%` fewer tokens (`3.65x` smaller tool surface in context)
+That means tool-schema context cost stays flat on the LLM side while your connected capability set grows.
+
+### Why this avoids context pollution
+
+- Without ThinMCP: model receives every upstream tool schema (cost grows with each server/tool).
+- With ThinMCP: model always receives the same two tool schemas.
+- Result: you can keep adding MCP servers without growing tool-schema prompt tokens.
+
+### Benchmarks (`tiktoken` `o200k_base`, minified `tools/list` JSON)
+
+| Scenario | Upstream tools | Direct MCP tokens | ThinMCP tokens | Reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Exa (`mcp.exa.ai`) | 3 | 686 | 188 | 72.59% |
+| Cloudflare Docs MCP | 2 | 278 | 188 | 32.37% |
+| Filesystem MCP (`@modelcontextprotocol/server-filesystem`) | 14 | 2612 | 188 | 92.80% |
+| Memory MCP (`@modelcontextprotocol/server-memory`) | 9 | 2117 | 188 | 91.12% |
+| Everything MCP (`@modelcontextprotocol/server-everything`) | 13 | 1413 | 188 | 86.69% |
+| Figma MCP (`figma-mcp`) | 5 | 427 | 188 | 55.97% |
+| Puppeteer MCP (`puppeteer-mcp-server`) | 8 | 504 | 188 | 62.70% |
+
+### Multi-MCP aggregate benchmark
+
+- Stacked MCPs: Filesystem + Memory + Everything + Figma + Puppeteer
+- Total upstream tools: `49`
+- Direct tool-schema footprint: `7065` tokens
+- ThinMCP tool-schema footprint: `188` tokens
+- Net reduction: `97.34%` (`37.58x` smaller)
 
 ## Configure Upstream MCP Sources
 
