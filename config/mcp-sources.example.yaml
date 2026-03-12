@@ -33,7 +33,7 @@ servers:
       - -y
       - "@modelcontextprotocol/server-filesystem"
       - /tmp
-    cwd: /Users/sri/Desktop/silly_experiments/ThinMCP
+    cwd: .
     stderr: inherit
     allowTools:
       - "filesystem.*"
