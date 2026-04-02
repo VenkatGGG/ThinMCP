@@ -17,12 +17,12 @@ The result is a simpler integration point for clients and a more predictable run
 
 ```mermaid
 flowchart LR
-    A["LLM / MCP Client"] -->|search() / execute()| B["ThinMCP Gateway"]
+    A["LLM or MCP Client"] --> B["ThinMCP Gateway"]
     B --> C["Local Catalog"]
     B --> D["Execution Layer"]
     D --> E["Schema Validation"]
     E --> F["Upstream MCP Servers"]
-    G["Sync Process"] -->|tools/list| F
+    G["Sync Process"] --> F
     G --> C
     G --> H["Snapshots"]
 ```
